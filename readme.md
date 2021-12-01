@@ -1,0 +1,1 @@
+This repo is about data preparation for the [GetTimezone](https://github.com/jonathanlurie/gettimezone) project.
