@@ -103,6 +103,7 @@ function writePolygonBuffer(id, index, geojsonPolygon) {
   const flatPolygon = new Float32Array(geojsonPolygon.flat())
   const buf = Buffer.from(flatPolygon.buffer)
   fs.writeFileSync(`timezone_data/output/tz_bin/${encodedId}/${index}.bin`, buf)
+  return buf
 }
 
 
@@ -118,6 +119,7 @@ function main() {
 
   // this list is what is going to fuel the creation of the BVH
   const polygonSummaryList = []
+  const base64Polygons = {}
   
   for (let i = 0; i < timezoneGeojson.features.length; i += 1) {
     let polygonCounter = 0 // some polygons have a 0 area so we cannot rely solely in i
@@ -148,7 +150,13 @@ function main() {
       }
       
       // writing polygon buffer on disc
-      writePolygonBuffer(id, polygonCounter, polygon)
+      const buf = writePolygonBuffer(id, polygonCounter, polygon)
+
+      if (!(id in base64Polygons)) {
+        base64Polygons[id] = []
+      }
+
+      base64Polygons[id].push(buf.toString('base64'))
 
       // the property names are short/unreadable because this is going to be JSON serialized
       // and we want this payload to be as small as possible
@@ -166,6 +174,11 @@ function main() {
   // compute the BVH
   const rooBvhNode = new NodeBVH(polygonSummaryList)
   jsonfile.writeFileSync('timezone_data/output/bvh.json', rooBvhNode)
+
+  jsonfile.writeFileSync('timezone_data/output/base64Polygons.json', base64Polygons)
+
+  // console.log(base64Polygons)
+  
 }
 
 main()
